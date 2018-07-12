@@ -1,7 +1,7 @@
 FROM node:latest
 MAINTAINER DC <david.chobotsky@bizztreat.com>
 
-WORKDIR /home
+WORKDIR /code
 
 # Initialize
 RUN git clone https://github.com/bizztreat/keboola-ex-itunes ./ && npm install
