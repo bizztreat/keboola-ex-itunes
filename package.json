@@ -1,0 +1,42 @@
+{
+  "name": "keboola-ex-itunes-extractor",
+  "version": "2.0.0",
+  "description": "Keboola Extractor for iTunes Connect",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blueskydigital/keboola-ex-itunes-connect.git"
+  },
+  "keywords": [
+    "ITunes Connect",
+    "Reporter API",
+    "Docker"
+  ],
+  "author": "Radek Tomasek <radek.tomasek@gmail.com>",
+  "license": "NONE",
+  "homepage": "https://github.com/blueskydigital/keboola-ex-itunes-connect",
+  "dependencies": {
+    "babel-polyfill": "^6.16.0",
+    "bluebird": "^3.4.6",
+    "commander": "^2.9.0",
+    "crypto": "0.0.3",
+    "fast-csv": "^2.3.0",
+    "is-there": "^4.3.6",
+    "itc-reporter": "^1.0.3",
+    "jsonfile": "^2.4.0",
+    "lodash": "^4.16.4",
+    "moment": "^2.15.1",
+    "nconf": "^0.8.4",
+    "rimraf-promise": "^2.0.0",
+    "tmp": "0.0.29",
+    "twix": "^1.1.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.16.0",
+    "babel-core": "^6.17.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.16.0",
+    "babel-preset-stage-0": "^6.16.0"
+  }
+}
