@@ -1,4 +1,4 @@
-FROM radektomasek/keboola-base-node
+FROM node:latest
 MAINTAINER DC <david.chobotsky@bizztreat.com>
 
 WORKDIR /home
