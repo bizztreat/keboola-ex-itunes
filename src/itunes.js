@@ -1,41 +1,27 @@
-import path from 'path';
-import rimraf from 'rimraf-promise';
-import command from './helpers/cliHelper';
-import {
-  size,
-  capitalize
-} from 'lodash';
-import {
-  createTmpDirectory,
-  readFilesFromDirectory
-} from './helpers/fileHelper';
-import {
-  getConfig,
-  generateManifests,
-  parseConfiguration,
-  createManifestFile
-} from './helpers/keboolaHelper';
-import {
-  PRIMARY_KEY,
-  CONFIG_FILE,
-  IS_INCREMENTAL,
-  DATASET_DOWNLOADED,
-  DEFAULT_TABLES_OUT_DIR
-} from './constants';
-import {
-  downloadReports,
-  iTunesConnectInit,
-  getDownloadedReports,
-  generateReportParams,
-  uncompressReportFiles,
-  getKeysBasedOnReportType,
-  transferFilesFromSourceToDestination
-} from './helpers/iTunesHelper';
+const _ = require('lodash')
+const path = require('path')
+const rimraf = require('rimraf-promise')
+const constants = require('./constants')
+const { getConfig, parseConfiguration } = require('./helpers/configHelper')
+const { createManifestFile } = require('./helpers/csvHelper')
+const { createTmpDirectory, readFilesFromDirectory } = require('./helpers/fileHelper')
+const {
+   iTunesConnectInit,
+   generateReportParams,
+   getKeysBasedOnReportType,
+   downloadReports,
+   uncompressReportFiles,
+   getDownloadedReports,
+   transferFilesFromSourceToDestination
+} = require('./helpers/iTunesHelper')
 
 /**
  * This is the main part of the program.
  */
-(async() => {
+module.exports = async (dataDir) => {
+  const configFile = path.join(dataDir, constants.CONFIG_FILE)
+  const tableOutDir = path.join(dataDir, constants.DEFAULT_TABLES_OUT_DIR)
+
   try {
     // Reading of the input configuration.
     const {
@@ -43,26 +29,27 @@ import {
       dates,
       account,
       accessToken,
-      userId,
       regions,
       periods,
       vendors,
       endDate,
       fileName,
-      password,
       dateType,
       startDate,
       reportType,
       reportSubType
-    } = await parseConfiguration(getConfig(path.join(command.data, CONFIG_FILE)));
+    } = parseConfiguration(getConfig(configFile))
+
+    console.log("Version: 1.0.0")
+    console.log(`Downloading data between ${startDate} and ${endDate}!`)
+
     // Prepares table out directory where the files are going to be stored.
-    console.log(`Downloading data between ${startDate} and ${endDate}!`);
     const downloadDir = await createTmpDirectory();
-    const tableOutDir = path.join(command.data, DEFAULT_TABLES_OUT_DIR);
     const reporter = iTunesConnectInit({ accessToken, account, mode, reportType });
     const options = generateReportParams({
       vendors, regions, periods, dates, dateType, reportType, reportSubType
     });
+    
     const reports = await Promise.all(downloadReports(reporter, options, downloadDir));
 
     console.log(reports);
@@ -75,24 +62,26 @@ import {
     console.debug(reporter)
     console.debug("---")
     console.debug("zip files:" + compressedFiles)
-    console.debug("files:" + files + " size: " + size(files))
+    console.debug("files:" + files + " size: " + _.size(files))
     console.debug("---")
 
     // Check whether the input files exist (if some data was downloaded + written into the files).
-    if (size(files) > 0) {
+    if (_.size(files) > 0) {
       const transferedFiles = await transferFilesFromSourceToDestination(downloadDir, tableOutDir, files, fileName, reportType, getKeysBasedOnReportType(reportType));
       // Create final manifest.
-      const manifest = await createManifestFile(
-        `${path.join(tableOutDir, fileName)}.manifest`,
-        { incremental: IS_INCREMENTAL, primary_key: PRIMARY_KEY }
-      );
+      const manifest = {
+         incremental: constants.IS_INCREMENTAL,
+         primary_key: constants.PRIMARY_KEY
+        }
+      await createManifestFile(`${path.join(tableOutDir, fileName)}.manifest`, manifest)
     }
     // Cleaning.
     const cleaning = await rimraf(downloadDir);
-    console.log('Extraction completed!');
-    process.exit(0);
-  } catch(error) {
-    console.error(error);
-    process.exit(1);
+
+    console.log('Extraction completed!')
+    process.exit(constants.EXIT_STATUS_SUCCESS)
+  } catch (error) {
+    console.error(error.message ? error.message : error)
+    process.exit(constants.EXIT_STATUS_FAILURE)
   }
-})();
+}

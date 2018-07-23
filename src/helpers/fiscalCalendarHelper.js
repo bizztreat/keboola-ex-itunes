@@ -1,38 +1,51 @@
-'use strict';
-import moment from 'moment';
-import {
+const {
   first,
   range,
   flatten,
   includes,
   flattenDeep
-} from 'lodash';
-import {
+} = require('lodash')
+const moment = require('moment')
+const twix = require('twix')
+const {
   INITIAL_PERIOD,
+  MOMENT_PERIOD,
   DEFAULT_DATE_MASK
-} from '../constants';
-import {
+} = require('../constants')
+
+module.exports = {
+  daysInMonth,
+  isLeapYear,
+  getWeekStartDatesByPeriods,
+  populateWeeksByDates,
+  buildWeek,
+  fiscalWeeks,
+  generateFiscalCalendar,
+  buildCalendar,
+  periodsList,
+  getFiscalCalendar,
+  alignPeriod,
   generateDateArray
-} from './keboolaHelper';
+}
 
 /**
  * This function generates days in a fiscal month.
  */
-export function daysInMonth(year, month) {
+function daysInMonth(year, month) {
   return 32 - (new Date(year, month, 32).getDate());
 }
 
 /**
  * This function checks whether a certain year is a leap one.
  */
-export function isLeapYear(year) {
+function isLeapYear(year) {
   return ((52 * (year + 3) + 146) % 293) < 52;
 }
 
 /**
  * This function gets week start dates by periods.
  */
-export function getWeekStartDatesByPeriods(periodDates) {
+function getWeekStartDatesByPeriods(periodDates) {
   return periodDates
     .map(date => {
       return moment
@@ -45,7 +58,7 @@ export function getWeekStartDatesByPeriods(periodDates) {
 /**
  * This function populates the whole weeks by dates.
  */
-export function populateWeeksByDates(periodArray) {
+function populateWeeksByDates(periodArray) {
   return periodArray.map(epoch => {
     return range(0, 7).map(day => {
       return moment(epoch, "X")
@@ -58,7 +71,7 @@ export function populateWeeksByDates(periodArray) {
 /**
  * This function build whole weeks within fiscal periods.
  */
-export function buildWeek(year, month, day) {
+function buildWeek(year, month, day) {
   const daysInCurrentMonth = daysInMonth(year, month);
   let zeroOffset = 0;
   let dayOfWeek;
@@ -82,7 +95,7 @@ export function buildWeek(year, month, day) {
 /**
  * This function calculates the fiscal weeks.
  */
-export function fiscalWeeks(year, month, day, weekCount) {
+function fiscalWeeks(year, month, day, weekCount) {
   const weeksInPeriod = [];
   let week = buildWeek(year, month, day);
   weeksInPeriod.push(week);
@@ -98,7 +111,7 @@ export function fiscalWeeks(year, month, day, weekCount) {
 /**
  * This function generates the whole fiscal calendar.
  */
-export function generateFiscalCalendar({ year, month }) {
+function generateFiscalCalendar({ year, month }) {
   const result = [];
   const previousYear = year - 1;
   const firstDayOfMonth = (new Date(previousYear, month)).getDay();
@@ -130,7 +143,7 @@ export function generateFiscalCalendar({ year, month }) {
 /**
  * This function builds the calendar.
  */
-export function buildCalendar(fiscalArray) {
+function buildCalendar(fiscalArray) {
   return fiscalArray.map(period => {
     return flatten(populateWeeksByDates(getWeekStartDatesByPeriods(period)));
   });
@@ -139,7 +152,7 @@ export function buildCalendar(fiscalArray) {
 /**
  * This function prepares the periods related to the fiscal dates.
  */
-export function periodsList(currentYear, nextYear, dates) {
+function periodsList(currentYear, nextYear, dates) {
   const fiscalCalendar = getFiscalCalendar([currentYear, nextYear]);
   return dates.map((date, index) => {
     return flattenDeep(fiscalCalendar.map((yearArray, yearIndex) => {
@@ -155,7 +168,7 @@ export function periodsList(currentYear, nextYear, dates) {
 /**
  * This function get the fiscal calendar.
  */
-export function getFiscalCalendar(fiscalYears) {
+function getFiscalCalendar(fiscalYears) {
   return fiscalYears.map(year => {
     return generateFiscalCalendar({ year, month: INITIAL_PERIOD });
   });
@@ -164,7 +177,7 @@ export function getFiscalCalendar(fiscalYears) {
 /**
  * This function reads the generated period and align it for better processing.
  */
-export function alignPeriod(inputPeriod) {
+function alignPeriod(inputPeriod) {
   const periodArray = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   const yearInteger = parseInt(first(inputPeriod.split('-')));
   const periodId = inputPeriod.split('-')[1];
@@ -173,4 +186,19 @@ export function alignPeriod(inputPeriod) {
     : yearInteger;
   const fiscalPeriod = periodArray[ periodId ];
   return { fiscalYear, fiscalPeriod };
+}
+
+/**
+ * This function gets dateFrom and dateTo and generates array of dates
+ * which contains all dates within that interval.
+ */
+function generateDateArray(dateFrom, dateTo) {
+  const outputArray = [];
+  const range = moment(dateFrom, DEFAULT_DATE_MASK)
+    .twix(moment(dateTo, DEFAULT_DATE_MASK))
+    .iterate(MOMENT_PERIOD);
+  while(range.hasNext()) {
+    outputArray.push(moment(range.next()._d).format(DEFAULT_DATE_MASK));
+  }
+  return outputArray;
 }

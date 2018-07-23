@@ -1,30 +1,15 @@
-'use strict';
-import fs from 'fs';
-import csv from 'fast-csv';
-import zlib from 'zlib';
-import path from 'path';
-import crypto from 'crypto';
-import isThere from 'is-there';
-import Promise from 'bluebird';
-import {
-  size,
-  last,
-  flatten,
-  includes,
-  camelCase,
-  capitalize
-} from 'lodash';
-import {
-  Sales,
-  Finance
-} from 'itc-reporter';
-import {
-  generateOutputName
-} from './keboolaHelper';
-import {
-  alignPeriod
-} from './fiscalCalendarHelper';
-import {
+const _ = require('lodash')
+const fs = require('fs')
+const csv = require('fast-csv')
+const zlib = require('zlib')
+const path = require('path')
+const crypto = require('crypto')
+const Promise = require('bluebird')
+const isThere = require('is-there')
+const { alignPeriod } = require('./fiscalCalendarHelper')
+const { generateOutputName } = require('./csvHelper')
+const { Sales, Finance } = require('itc-reporter')
+const {
   END_TYPE,
   ENOTFOUND,
   ECONNRESET,
@@ -38,12 +23,22 @@ import {
   REPORT_SALES_TYPE,
   DATASET_DOWNLOADED,
   REPORT_FINANCIAL_TYPE
-} from '../constants';
+} = require('../constants')
+
+module.exports = {
+  iTunesConnectInit,
+  generateReportParams,
+  getKeysBasedOnReportType,
+  downloadReports,
+  uncompressReportFiles,
+  getDownloadedReports,
+  transferFilesFromSourceToDestination
+}
 
 /**
  * This function creates the iTunes Connect instance.
  */
-export function iTunesConnectInit({ accessToken, account, mode, reportType }) { // userId, password
+function iTunesConnectInit({ accessToken, account, mode, reportType }) { // userId, password
   if (reportType === REPORT_SALES_TYPE) {
     return new Sales({ accessToken, account, mode });
     //return new Sales({ userId, password, mode });
@@ -56,18 +51,18 @@ export function iTunesConnectInit({ accessToken, account, mode, reportType }) { 
 /**
  * This function creates params based on the report type.
  */
-export function generateReportParams({ vendors, regions, periods, dates, dateType, reportType, reportSubType }) {
+function generateReportParams({ vendors, regions, periods, dates, dateType, reportType, reportSubType }) {
   if (reportType === REPORT_SALES_TYPE) {
-    return generateSalesReportParameters({ vendors, dates, reportSubType, dateType, reportType: capitalize(reportType) });
+    return generateSalesReportParameters({ vendors, dates, reportSubType, dateType, reportType: _.capitalize(reportType) });
   } else if (reportType === REPORT_FINANCIAL_TYPE) {
-    return generateFinancialReportParameters({ vendors, periods, regions, reportType: capitalize(reportType) });
+    return generateFinancialReportParameters({ vendors, periods, regions, reportType: _.capitalize(reportType) });
   }
 }
 
 /**
  * This function generates the right keys based on the report type.
  */
-export function getKeysBasedOnReportType(reportType) {
+function getKeysBasedOnReportType(reportType) {
   if (reportType === REPORT_SALES_TYPE) {
     return SALES_KEYS;
   } else if (reportType === REPORT_FINANCIAL_TYPE) {
@@ -78,8 +73,8 @@ export function getKeysBasedOnReportType(reportType) {
 /**
  * This function generates the parameters required for downloading the sales reports.
  */
-export function generateSalesReportParameters({ vendors, dates, reportSubType, dateType, reportType }) {
-  return flatten(dates
+function generateSalesReportParameters({ vendors, dates, reportSubType, dateType, reportType }) {
+  return _.flatten(dates
     .reduce((previous, current) => {
       return [...previous, vendors
         .map(vendor => {
@@ -97,8 +92,8 @@ export function generateSalesReportParameters({ vendors, dates, reportSubType, d
 /**
  * This function generates the parameters required for downloading the financial reports.
  */
-export function generateFinancialReportParameters({ vendors, periods, regions, reportType }) {
-  return flatten(periods
+function generateFinancialReportParameters({ vendors, periods, regions, reportType }) {
+  return _.flatten(periods
     .reduce((previous, current) => {
       return [...previous, addPeriodIntoParamsObject(vendors, current, regions, reportType)];
     }, []));
@@ -107,8 +102,8 @@ export function generateFinancialReportParameters({ vendors, periods, regions, r
 /**
  * This function adds period into desired params.
  */
-export function addPeriodIntoParamsObject(vendors, period, regions, reportType) {
-  return flatten(vendors
+function addPeriodIntoParamsObject(vendors, period, regions, reportType) {
+  return _.flatten(vendors
     .reduce((previous, current) => {
       return [...previous, regions
         .map(regionCode => {
@@ -128,7 +123,7 @@ export function addPeriodIntoParamsObject(vendors, period, regions, reportType) 
 /**
  * This function reads the input parameters and generate download promises.
  */
-export function downloadReports(reporter, options, outputDirectory) {
+function downloadReports(reporter, options, outputDirectory) {
   return options.map(params => {
     return getReport(reporter, params, outputDirectory);
   });
@@ -141,7 +136,7 @@ export function downloadReports(reporter, options, outputDirectory) {
 /**
  * This function helps to download particular report based on the options object
  */
-export function getReport(reporter, options, outputDirectory) {
+function getReport(reporter, options, outputDirectory) {
   return new Promise((resolve, reject) => {
     const readingStream = reporter.getReport(options);
     const fileName = generateOutputName(options);
@@ -175,7 +170,7 @@ export function getReport(reporter, options, outputDirectory) {
  * filter out the ones which don't contain any data
  * and extract the rest of them.
  */
-export function uncompressReportFiles(directory, files) {
+function uncompressReportFiles(directory, files) {
   return files
     .map(file => {
       return extractReports(path.join(directory, file));
@@ -185,7 +180,7 @@ export function uncompressReportFiles(directory, files) {
 /**
  * This function extracts the gzipped files and get the actual text files
  */
-export function extractReports(file) {
+function extractReports(file) {
   return new Promise((resolve, reject) => {
     fs.readFile(file, (error, compressedFile) => {
       if (error) {
@@ -204,7 +199,7 @@ export function extractReports(file) {
             if (error) {
               reject(error);
             }
-            resolve(last(outputFile.split('/')));
+            resolve(_.last(outputFile.split('/')));
           });
         }
       });
@@ -216,7 +211,7 @@ export function extractReports(file) {
  * This function select the report which were actually extracted
  * Existing files contain .csv in a file.
  */
-export function getDownloadedReports(files) {
+function getDownloadedReports(files) {
   //return files;
   return files.filter(file => file.indexOf('.csv') > 0);
 }
@@ -225,7 +220,7 @@ export function getDownloadedReports(files) {
  * This function reads files in source directory and transfer them into destination directory.
  * It also adds some primary key information.
  */
-export function transferFilesFromSourceToDestination(sourceDir, destinationDir, files, destinationFile, reportType, keyArray) {
+function transferFilesFromSourceToDestination(sourceDir, destinationDir, files, destinationFile, reportType, keyArray) {
   return Promise.each(files, sourceFile => {
     return transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinationDir, destinationFile, reportType, keyArray);
   });
@@ -234,7 +229,7 @@ export function transferFilesFromSourceToDestination(sourceDir, destinationDir, 
 /**
  * This function update files, add hash which is going to be a primary key and store the file in the new location
  */
-export function transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinationDir, destinationFile, reportType, keyArray) {
+function transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinationDir, destinationFile, reportType, keyArray) {
   return new Promise((resolve, reject) => {
     let counter = 0;
     const outputFile = path.join(destinationDir, destinationFile);
@@ -271,20 +266,20 @@ export function transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinat
 /**
  * This function combines the data with the keys.
  */
-export function combineDataWithKeys(data, keys, counter) {
+function combineDataWithKeys(data, keys, counter) {
   return Object.keys(data)
     .reduce((previous, current) => {
-      return Object.assign(previous, { [ camelCase(current) ]: data[ current ].trim() });
+      return Object.assign(previous, { [ _.camelCase(current) ]: data[ current ].trim() });
     }, { id: generatePrimaryKey( data, keys, counter ) });
 }
 
 /**
  * This function generates hash based on the data and specified keys.
  */
-export function generatePrimaryKey(data, keys, counter) {
+function generatePrimaryKey(data, keys, counter) {
   const keyObject = Object.keys(data)
     .reduce((previous, current) => {
-      if (includes(keys, current)) {
+      if (_.includes(keys, current)) {
         return { id: `${previous['id']} ${data[current]}` };
       } else {
         return previous;
