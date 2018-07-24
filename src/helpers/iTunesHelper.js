@@ -235,7 +235,7 @@ function transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinationDir,
     const outputFile = path.join(destinationDir, destinationFile);
     const headers = !isThere(outputFile);
     const readStream = fs.createReadStream(path.join(sourceDir, sourceFile));
-    const csvStream = csv.createWriteStream({ headers: headers });
+    const csvStream = csv.createWriteStream({ headers: headers, quoteColumns: true });
     const writeStream = fs.createWriteStream(outputFile, { flags: 'a', encoding: "utf8" });
     if (!headers) writeStream.write("\r\n"); // new line after stream ends
 
