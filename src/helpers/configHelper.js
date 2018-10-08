@@ -79,7 +79,7 @@ function parseConfiguration(configObject = {}) {
 
     // Another important step is to set the date range properly.
     const maximalDate = moment.utc().subtract(1, MOMENT_PERIOD).format(DEFAULT_DATE_MASK);
-    const defaultStartDate = moment.utc().subtract(2, MOMENT_PERIOD).format(DEFAULT_DATE_MASK);
+    const defaultStartDate = moment.utc().subtract(5, MOMENT_PERIOD).format(DEFAULT_DATE_MASK);
     const startDate = !_.isUndefined(configObject.get('parameters:startDate')) && !_.isEmpty(configObject.get('parameters:startDate'))
       ? configObject.get('parameters:startDate')
       : defaultStartDate;

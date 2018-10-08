@@ -40,7 +40,7 @@ module.exports = async (dataDir) => {
       reportSubType
     } = parseConfiguration(getConfig(configFile))
 
-    console.log("Version: 1.0.0")
+    console.log("Version: 2.0.1")
     console.log(`Downloading data between ${startDate} and ${endDate}!`)
 
     // Prepares table out directory where the files are going to be stored.

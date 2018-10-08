@@ -194,7 +194,7 @@ function extractReports(file) {
             reject(error);
           }
         } else {
-          const outputFile = file.slice(0,-3);
+          const outputFile = file.slice(0, -3);
           fs.writeFile(outputFile, data, error => {
             if (error) {
               reject(error);
@@ -240,7 +240,7 @@ function transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinationDir,
     if (!headers) writeStream.write("\r\n"); // new line after stream ends
 
     csv
-      .fromStream(readStream, { headers: true, delimiter: '\t' })
+      .fromStream(readStream, { headers: true, delimiter: '\t', ignoreEmpty: true })
       .validate(data => {
         if (reportType.toLowerCase() === REPORT_FINANCIAL_TYPE) {
           return data['startDate'].indexOf('Total') < 0;
@@ -269,8 +269,8 @@ function transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinationDir,
 function combineDataWithKeys(data, keys, counter) {
   return Object.keys(data)
     .reduce((previous, current) => {
-      return Object.assign(previous, { [ _.camelCase(current) ]: data[ current ].trim() });
-    }, { id: generatePrimaryKey( data, keys, counter ) });
+      return Object.assign(previous, { [_.camelCase(current)]: data[current].trim() });
+    }, { id: generatePrimaryKey(data, keys, counter) });
 }
 
 /**
