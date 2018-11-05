@@ -232,12 +232,12 @@ function transferFilesFromSourceToDestination(sourceDir, destinationDir, files, 
 function transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinationDir, destinationFile, reportType, keyArray) {
   return new Promise((resolve, reject) => {
     let counter = 0;
+    const NL = (process.platform === 'win32' ? '\r\n' : '\n')
     const outputFile = path.join(destinationDir, destinationFile);
     const headers = !isThere(outputFile);
     const readStream = fs.createReadStream(path.join(sourceDir, sourceFile));
     const csvStream = csv.createWriteStream({ headers: headers, quoteColumns: true });
     const writeStream = fs.createWriteStream(outputFile, { flags: 'a', encoding: "utf8" });
-    if (!headers) writeStream.write("\r\n"); // new line after stream ends
 
     csv
       .fromStream(readStream, { headers: true, delimiter: '\t', ignoreEmpty: true })
@@ -259,7 +259,10 @@ function transformFilesByAddingPrimaryKey(sourceDir, sourceFile, destinationDir,
         resolve(sourceFile)
       })
       .pipe(csvStream)
-      .pipe(writeStream);
+      .pipe(writeStream)
+
+      if (!headers) writeStream.write(""); // new line after stream ends
+      if (!headers) writeStream.write(NL); // new line after stream ends
   });
 }
 
