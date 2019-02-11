@@ -25,7 +25,7 @@
     "is-there": "^4.3.6",
     "itc-reporter": "^1.0.3",
     "jsonfile": "^2.4.0",
-    "lodash": "^4.16.4",
+    "lodash": "^4.17.11",
     "moment": "^2.15.1",
     "nconf": "^0.8.4",
     "rimraf-promise": "^2.0.0",
