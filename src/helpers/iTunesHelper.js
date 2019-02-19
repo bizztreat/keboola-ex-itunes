@@ -156,10 +156,10 @@ function getReport(reporter, options, outputDirectory) {
         const { statusCode } = response;
         if (statusCode === 200 || statusCode === 404) {
           resolve(file);
-        } else if (statusCode >= 400 && statusCode <= 403) {
+        } else if (statusCode >= 400 && statusCode < 403) {
           resolve({});
         }
-        reject(statusCode);
+        reject(statusCode + " Forbidden");
       });
     readingStream.pipe(writingStream);
   });
